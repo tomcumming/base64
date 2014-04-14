@@ -1,2 +1,2 @@
 base64:
-	gcc --std=c11 -Wall main.c base64.c
+	gcc -g --std=c11 -Wall main.c base64.c

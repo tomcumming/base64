@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
 	for(size_t i = 0; i < testCount; i++)
 	{
-		printf("Test #%u: ", i);
+		printf("Test #%zu: ", i);
 
 		size_t inputLength = strlen((char*) testCases[i]);
 		size_t encBufLength = b64_encodedLength(inputLength);
