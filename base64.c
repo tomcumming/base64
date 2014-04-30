@@ -146,34 +146,28 @@ uint8_t lookupB64(uint8_t c)
 	}
 }
 
-void decode4(uint8_t *src, uint8_t *dst)
-{
-	*dst = lookupB64(src[0]) << 2;
-	*dst |= (lookupB64(src[1]) & 0x30) >> 4;
-	dst++;
-
-	*dst = (lookupB64(src[1]) & 0x0f) << 4;
-	*dst |= (lookupB64(src[2]) & 0x3c) >> 2;
-	dst++;
-
-	*dst = (lookupB64(src[2]) & 0x03) << 6;
-	*dst |= lookupB64(src[3]);
-}
-
-void decode3(uint8_t *src, uint8_t *dst)
-{
-	*dst = lookupB64(src[0]) << 2;
-	*dst |= (lookupB64(src[1]) & 0x30) >> 4;
-	dst++;
-
-	*dst = (lookupB64(src[1]) & 0x0f) << 4;
-	*dst |= (lookupB64(src[2]) & 0x3c) >> 2;
-}
-
 void decode2(uint8_t *src, uint8_t *dst)
 {
 	*dst = lookupB64(src[0]) << 2;
 	*dst |= (lookupB64(src[1]) & 0x30) >> 4;
+}
+
+void decode3(uint8_t *src, uint8_t *dst)
+{
+	decode2(src, dst);
+	dst++;
+
+	*dst = (lookupB64(src[1]) & 0x0f) << 4;
+	*dst |= (lookupB64(src[2]) & 0x3c) >> 2;
+}
+
+void decode4(uint8_t *src, uint8_t *dst)
+{
+	decode3(src, dst);
+	dst += 2;
+
+	*dst = (lookupB64(src[2]) & 0x03) << 6;
+	*dst |= lookupB64(src[3]);
 }
 
 size_t b64_decode(uint8_t *src, size_t len, uint8_t *dst)
