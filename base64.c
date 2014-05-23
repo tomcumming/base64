@@ -13,10 +13,8 @@ size_t b64_decodedLength(size_t length)
 	return length * 3 / 4;
 }
 
-void b64_encode(uint8_t *src, size_t len, uint8_t *dst)
+void b64_encodeFirstByte(uint8_t *src, uint8_t *dst)
 {
-	while(len >= 3)
-	{
 		// 1st b64 char
 		*dst = charTable[(src[0] & 0xfc) >> 2]; 
 		dst++;
@@ -25,7 +23,15 @@ void b64_encode(uint8_t *src, size_t len, uint8_t *dst)
 		*dst = (src[0] & 0x03) << 4;
 		*dst |= (src[1] & 0xf0) >> 4;
 		*dst = charTable[*dst];
-		dst++;
+}
+
+void b64_encode(uint8_t *src, size_t len, uint8_t *dst)
+{
+	while(len >= 3)
+	{
+		// 1st & 2nd b64 char
+		b64_encodeFirstByte(src, dst);
+		dst += 2;
 
 		//3rd
 		*dst = (src[1] & 0x0f) << 2;
@@ -43,15 +49,9 @@ void b64_encode(uint8_t *src, size_t len, uint8_t *dst)
 
 	if(len == 2)
 	{
-		// 1st b64 char
-		*dst = charTable[(src[0] & 0xfc) >> 2]; 
-		dst++;
-
-		// 2nd
-		*dst = (src[0] & 0x03) << 4;
-		*dst |= (src[1] & 0xf0) >> 4;
-		*dst = charTable[*dst];
-		dst++;
+		// 1st & 2nd b64char
+		b64_encodeFirstByte(src, dst);
+		dst += 2;
 
 		// padding
 		*dst = '=';
