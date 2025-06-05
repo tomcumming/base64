@@ -47,14 +47,17 @@ void b64_encode(uint8_t *src, size_t len, uint8_t *dst)
 		len -= 3;
 	}
 
-	if(len == 2)
-	{
-		// 1st & 2nd b64char
-		b64_encodeFirstByte(src, dst);
-		dst += 2;
+	if (len == 2) {
+    	/* 1st & 2nd chars */
+    	b64_encodeFirstByte(src, dst);
+    	dst += 2;
 
-		// padding
-		*dst = '=';
+    	/* 3rd char — top 4 bits of the second byte */
+    	*dst = charTable[(src[1] & 0x0F) << 2];
+    	dst++;
+
+    	/* padding */
+    	*dst = '=';
 	}
 	else if(len == 1)
 	{
