@@ -1,8 +1,8 @@
 #ifndef BASE64_H
 #define BASE64_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /*
  * Returns the required size of the destination buffer when encoding
