@@ -1,64 +1,37 @@
 #include "base64.h"
 
-uint8_t charTable[64] =
+uint8_t char_table[64] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 size_t b64_encodedLength(size_t length) { return (length + 2) / 3 * 4; }
 
 size_t b64_decodedLength(size_t length) { return length * 3 / 4; }
 
-void b64_encodeFirstByte(uint8_t *src, uint8_t *dst) {
-  // 1st b64 char
-  *dst = charTable[(src[0] & 0xfc) >> 2];
-  dst++;
-
-  // 2nd
-  *dst = (src[0] & 0x03) << 4;
-  *dst |= (src[1] & 0xf0) >> 4;
-  *dst = charTable[*dst];
-}
-
 void b64_encode(uint8_t *src, size_t len, uint8_t *dst) {
-  while (len >= 3) {
-    // 1st & 2nd b64 char
-    b64_encodeFirstByte(src, dst);
-    dst += 2;
+  for (size_t src_pos = 0; src_pos < len; src_pos += 3) {
+    dst[0] = char_table[src[src_pos] >> 2];
+    uint8_t s1 = (src[src_pos] & 0x03) << 4;
+    if (src_pos + 1 < len)
+      s1 |= src[src_pos + 1] >> 4;
+    dst[1] = char_table[s1];
 
-    // 3rd
-    *dst = (src[1] & 0x0f) << 2;
-    *dst |= (src[2] & 0xc0) >> 6;
-    *dst = charTable[*dst];
-    dst++;
+    if (src_pos + 1 < len) {
+      size_t s2 = (src[src_pos + 1] & 0x0f) << 2;
+      if (src_pos + 2 < len)
+        s2 |= src[src_pos + 2] >> 6;
+      dst[2] = char_table[s2];
 
-    // 4th
-    *dst = charTable[src[2] & 0x3f];
-    dst++;
+      if (src_pos + 2 < len) {
+        dst[3] = char_table[src[src_pos + 2] & 0x3f];
+      } else {
+        dst[3] = '=';
+      }
+    } else {
+      dst[2] = '=';
+      dst[3] = '=';
+    }
 
-    src += 3;
-    len -= 3;
-  }
-
-  if (len == 2) {
-    // 1st & 2nd b64char
-    b64_encodeFirstByte(src, dst);
-    dst += 2;
-
-    // padding
-    *dst = '=';
-  } else if (len == 1) {
-    // 1st b64 char
-    *dst = charTable[(src[0] & 0xfc) >> 2];
-    dst++;
-
-    // 2nd
-    *dst = charTable[(src[0] & 0x03) << 4];
-    dst++;
-
-    // padding
-    *dst = '=';
-    dst++;
-
-    *dst = '=';
+    dst += 4;
   }
 }
 
@@ -196,63 +169,33 @@ uint8_t lookupB64(uint8_t c) {
   }
 }
 
-void decode2(uint8_t *src, uint8_t *dst) {
-  *dst = lookupB64(src[0]) << 2;
-  *dst |= (lookupB64(src[1]) & 0x30) >> 4;
-}
-
-void decode3(uint8_t *src, uint8_t *dst) {
-  decode2(src, dst);
-  dst++;
-
-  *dst = (lookupB64(src[1]) & 0x0f) << 4;
-  *dst |= (lookupB64(src[2]) & 0x3c) >> 2;
-}
-
-void decode4(uint8_t *src, uint8_t *dst) {
-  decode3(src, dst);
-  dst += 2;
-
-  *dst = (lookupB64(src[2]) & 0x03) << 6;
-  *dst |= lookupB64(src[3]);
-}
-
 size_t b64_decode(uint8_t *src, size_t len, uint8_t *dst) {
-  size_t dstLength = 0;
+  size_t dst_size = 0;
 
-  while (len >= 5) {
-    decode4(src, dst);
+  while (len >= 4) {
+    size_t write_bytes = 3;
+    if (src[3] == '=')
+      write_bytes = 2;
+    if (src[2] == '=')
+      write_bytes = 1;
+    dst_size += write_bytes;
+
+    dst[0] = lookupB64(src[0]) << 2;
+    dst[0] |= lookupB64(src[1]) >> 4;
+
+    if (write_bytes > 1) {
+      dst[1] = lookupB64(src[1]) << 4;
+      dst[1] |= lookupB64(src[2]) >> 2;
+    }
+    if (write_bytes > 2) {
+      dst[2] = lookupB64(src[2]) << 6;
+      dst[2] |= lookupB64(src[3]);
+    }
+
     dst += 3;
     src += 4;
     len -= 4;
-    dstLength += 3;
   }
 
-  if (len == 4) {
-    if (src[3] != '=') {
-      decode4(src, dst);
-      dstLength += 3;
-    } else if (src[2] != '=') {
-      decode3(src, dst);
-      dstLength += 2;
-    } else {
-      decode2(src, dst);
-      dstLength += 1;
-    }
-  }
-
-  // The following code handles non standard code that doesnt use the '='
-  // termination symbol
-
-  else if (len == 3) {
-    decode3(src, dst);
-    dstLength += 2;
-  } else if (len == 2) {
-    decode2(src, dst);
-    dstLength += 1;
-  } else {
-    // encoding error!
-  }
-
-  return dstLength;
+  return dst_size;
 }
