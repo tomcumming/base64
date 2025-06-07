@@ -37,8 +37,8 @@ void test_string(size_t len, uint8_t *str) {
 }
 
 void wikipedia_tests() {
-  char *test_inputs[] = {"Man", "Ma", "M"};
-  char *test_output[] = {"TWFu", "TWE=", "TQ=="};
+  char *test_inputs[] = {"", "Man", "Ma", "M"};
+  char *test_output[] = {"", "TWFu", "TWE=", "TQ=="};
 
   size_t test_count = sizeof(test_inputs) / sizeof(char *);
 
