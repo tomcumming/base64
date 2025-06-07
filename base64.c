@@ -16,7 +16,7 @@ void b64_encode(uint8_t *src, size_t len, uint8_t *dst) {
     dst[1] = char_table[s1];
 
     if (src_pos + 1 < len) {
-      size_t s2 = (src[src_pos + 1] & 0x0f) << 2;
+      uint8_t s2 = (src[src_pos + 1] & 0x0f) << 2;
       if (src_pos + 2 < len)
         s2 |= src[src_pos + 2] >> 6;
       dst[2] = char_table[s2];
